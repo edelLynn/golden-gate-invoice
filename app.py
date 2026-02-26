@@ -45,9 +45,9 @@ if submitted:
                 draw = ImageDraw.Draw(template_img)
                 
                 try:
-                    font_normal = ImageFont.truetype("arial.ttf", 30)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 32) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 45) 
+                    font_normal = ImageFont.truetype("arial.ttf", 70)  
+                    font_tebal = ImageFont.truetype("arialbd.ttf", 80) 
+                    font_besar = ImageFont.truetype("arialbd.ttf", 110) 
                 except:
                     font_normal = font_tebal = font_besar = ImageFont.load_default()
 
