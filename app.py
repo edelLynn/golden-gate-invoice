@@ -8,7 +8,7 @@ import base64
 
 # ======================================================
 # API KEY IMGBB!
-IMGBB_API_KEY = "a9b93f8b62ea968b7b7cf6c3bdd54a24" 
+IMGBB_API_KEY = st.secrets["IMGBB_API_KEY"]
 # ======================================================
 
 st.title("🏆 Golden Gate Auto-QR & Invoice")
@@ -34,7 +34,7 @@ with st.form("invoice_form"):
     submitted = st.form_submit_button("Generate QR Code Sekarang!")
 
 if submitted:
-    if IMGBB_API_KEY == "":
+    if IMGBB_API_KEY == st.secrets["IMGBB_API_KEY"]:
         st.error("Bro, API Key ImgBB-nya diisi dulu di baris ke-11!")
     else:
         with st.spinner('Lagi ngeracik invoice...'):
