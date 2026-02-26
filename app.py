@@ -7,7 +7,7 @@ import requests
 import base64
 
 # ======================================================
-# API KEY IMGBB!
+# API KEY DIAMBIL DARI STREAMLIT SECRETS
 IMGBB_API_KEY = st.secrets["IMGBB_API_KEY"]
 # ======================================================
 
@@ -29,34 +29,22 @@ with st.form("invoice_form"):
     st.subheader("Detail Pembayaran")
     harga_rupiah = st.text_input("Harga (Rupiah)", value="")
     harga_usd = st.text_input("Harga (USD)", value="")
+    # Cuma ini yang pake placeholder sesuai kode lu
     total_amount = st.text_input("Total Amount", placeholder="tambahkan Rp./Usd")
     
     submitted = st.form_submit_button("Generate QR Code Sekarang!")
 
 if submitted:
-    if IMGBB_API_KEY == st.secrets["IMGBB_API_KEY"]:
-        st.error("Bro, API Key ImgBB-nya diisi dulu di baris ke-11!")
+    if not nama_klien:
+        st.error("Nama Klien wajib diisi bro!")
     else:
         with st.spinner('Lagi ngeracik invoice...'):
             try:
-                # 1. BUKA TEMPLATE & SETUP FONT
+                # 1. BUKA TEMPLATE & SETUP FONT (Cukup sekali panggil)
                 template_img = Image.open("template.png")
                 draw = ImageDraw.Draw(template_img)
                 
                 try:
-                    font_normal = ImageFont.truetype("arial.ttf", 45)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 50) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 65) 
-                except:
-                    font_normal = font_tebal = font_besar = ImageFont.load_default()
-
-                no_tagihan = f"GG-{random.randint(1000, 9999)}"
-                tanggal_str = tanggal.strftime("%d/ %m/ %Y")
-                
-                # --- KOORDINAT FIX ---
-                
-                # 1. Setting Font
-                try:
                     font_normal = ImageFont.truetype("arial.ttf", 30)  
                     font_tebal = ImageFont.truetype("arialbd.ttf", 32) 
                     font_besar = ImageFont.truetype("arialbd.ttf", 45) 
@@ -65,19 +53,7 @@ if submitted:
 
                 tanggal_str = tanggal.strftime("%d/ %m/ %Y")
                 
-                # --- PROSES NGE-CAP TEKS ---
-                
-                # --- SETTING FONT SKALA RESOLUSI ---
-                try:
-                    font_normal = ImageFont.truetype("arial.ttf", 30)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 32) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 45) 
-                except:
-                    font_normal = font_tebal = font_besar = ImageFont.load_default()
-
-                tanggal_str = tanggal.strftime("%d/ %m/ %Y")
-                
-                # --- PROSES NGE-CAP DATA ---
+                # --- PROSES NGE-CAP DATA (KOORDINAT FIX) ---
                 
                 # A. TANGGAL
                 draw.text((980, 440), tanggal_str, fill="white", font=font_normal)
@@ -86,44 +62,38 @@ if submitted:
                 draw.text((150, 680), nama_klien, fill="black", font=font_tebal)
                 draw.text((150, 740), email, fill="black", font=font_normal)
                 
-                # C. TABEL
+                # C. TABEL (Mapping sesuai kolom lu)
                 y_tabel = 1050
                 item_desc = f"{type_emas} - {produk}\n(Periode: {periode_invest})"
                 
-                draw.text((150, y_tabel), item_desc, fill="black", font=font_normal) # Kolom Barang
-                draw.text((680, y_tabel), berat_gram, fill="black", font=font_normal) # Kolom Jumlah
-                draw.text((880, y_tabel), harga_rupiah, fill="black", font=font_normal)  # Kolom Harga usd
-                draw.text((1150, y_tabel), harga_usd, fill="black", font=font_normal) # Kolom Harga rp
+                draw.text((150, y_tabel), item_desc, fill="black", font=font_normal)
+                draw.text((680, y_tabel), berat_gram, fill="black", font=font_normal)
+                draw.text((880, y_tabel), harga_rupiah, fill="black", font=font_normal)
+                draw.text((1150, y_tabel), harga_usd, fill="black", font=font_normal)
                 
                 # D. TOTAL AMOUNT
                 draw.text((1050, 1640), total_amount, fill="white", font=font_besar)
 
-                # --- UPLOAD KE IMGBB DULU BIAR DAPET LINK ---
+                # --- UPLOAD KE IMGBB ---
                 buf_invoice = BytesIO()
                 template_img.save(buf_invoice, format="PNG")
                 img_bytes = buf_invoice.getvalue()
                 
-                url_upload = "https://api.imgbb.com/1/upload"
                 payload = {
                     "key": IMGBB_API_KEY,
                     "image": base64.b64encode(img_bytes).decode('utf-8')
                 }
-                res = requests.post(url_upload, data=payload)
+                res = requests.post("https://api.imgbb.com/1/upload", data=payload)
                 
                 if res.status_code == 200:
                     link_online = res.json()["data"]["url"]
                     
-                    # --- BARU BIKIN QR CODE-NYA ---
+                    # BIKIN QR CODE
                     qr = qrcode.QRCode(box_size=10, border=4)
                     qr.add_data(link_online)
                     qr.make(fit=True)
                     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
                     
-                    # Tampilkan Preview Invoice di Web
-                    #st.subheader("👀 Preview Invoice Lu")
-                    #st.image(template_img, caption="Ini yang bakal muncul pas klien scan QR.")
-                    
-                    # Tampilkan QR Code Utama buat Kasir
                     st.success("✅ QR Code Siap! Scan buat liat Invoice.")
                     st.image(qr_img, width=300)
                     
@@ -133,5 +103,5 @@ if submitted:
                 else:
                     st.error("Gagal upload ke ImgBB bro!")
 
-            except FileNotFoundError:
-                st.error("File 'template.png' ilang dari folder!")
+            except Exception as e:
+                st.error(f"Error: {e}")
