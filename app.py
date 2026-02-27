@@ -40,13 +40,21 @@ if submitted:
                 template_img = Image.open("template.png")
                 draw = ImageDraw.Draw(template_img)
                 
-                # --- SETTING FONT SKALA RESOLUSI ---
+                # --- SETTING FONT SKALA RESOLUSI (DIPERBAIKI UNTUK SERVER LINUX) ---
                 try:
+                    # Coba cari font Windows (kalau dijalankan di laptop lokal)
                     font_normal = ImageFont.truetype("arial.ttf", 50)  
                     font_tebal = ImageFont.truetype("arialbd.ttf", 60) 
                     font_besar = ImageFont.truetype("arialbd.ttf", 90) 
                 except:
-                    font_normal = font_tebal = font_besar = ImageFont.load_default()
+                    try:
+                        # Kalau di Streamlit Cloud (Linux), pakai font bawaan server ini!
+                        font_normal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50)
+                        font_tebal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60)
+                        font_besar = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 90)
+                    except:
+                        # Kalau apes banget gak ketemu (harusnya nggak mungkin di Streamlit)
+                        font_normal = font_tebal = font_besar = ImageFont.load_default()
 
                 no_tagihan = f"GG-{random.randint(1000, 9999)}"
                 tanggal_str = tanggal.strftime("%d/ %m/ %Y")
@@ -92,10 +100,6 @@ if submitted:
                     qr.add_data(link_online)
                     qr.make(fit=True)
                     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-                    
-                    # Tampilkan Preview Invoice di Web
-                    #st.subheader("👀 Preview Invoice Lu")
-                    #st.image(template_img, caption="Ini yang bakal muncul pas klien scan QR.")
                     
                     # Tampilkan QR Code Utama buat Kasir
                     st.success("✅ QR Code Siap! Scan buat liat Invoice.")
