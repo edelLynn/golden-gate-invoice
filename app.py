@@ -5,10 +5,30 @@ from io import BytesIO
 import random
 import requests
 import base64
+import os
 
 # ======================================================
 # API KEY IMGBB!
 IMGBB_API_KEY = st.secrets["IMGBB_API_KEY"]
+# ======================================================
+
+# --- JURUS PAMUNGKAS: AUTO-DOWNLOAD FONT ---
+def ambil_font(url, nama_file, ukuran):
+    if not os.path.exists(nama_file):
+        try:
+            r = requests.get(url, allow_redirects=True)
+            with open(nama_file, 'wb') as f:
+                f.write(r.content)
+        except:
+            pass
+    try:
+        return ImageFont.truetype(nama_file, ukuran)
+    except:
+        return ImageFont.load_default()
+
+# Link langsung ke font server Google
+url_reguler = "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/static/Roboto-Regular.ttf"
+url_tebal = "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/static/Roboto-Bold.ttf"
 # ======================================================
 
 st.title("🏆 Golden Gate Auto-QR & Invoice")
@@ -34,27 +54,19 @@ with st.form("invoice_form"):
     submitted = st.form_submit_button("Generate QR Code Sekarang!")
 
 if submitted:
+    if not nama_klien:
+        st.error("Nama Klien wajib diisi bro!")
+    else:
         with st.spinner('Lagi ngeracik invoice...'):
             try:
-                # 1. BUKA TEMPLATE & SETUP FONT
+                # 1. BUKA TEMPLATE
                 template_img = Image.open("template.png")
                 draw = ImageDraw.Draw(template_img)
                 
-                # --- SETTING FONT SKALA RESOLUSI (DIPERBAIKI UNTUK SERVER LINUX) ---
-                try:
-                    # Coba cari font Windows (kalau dijalankan di laptop lokal)
-                    font_normal = ImageFont.truetype("arial.ttf", 50)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 60) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 90) 
-                except:
-                    try:
-                        # Kalau di Streamlit Cloud (Linux), pakai font bawaan server ini!
-                        font_normal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50)
-                        font_tebal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60)
-                        font_besar = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 90)
-                    except:
-                        # Kalau apes banget gak ketemu (harusnya nggak mungkin di Streamlit)
-                        font_normal = font_tebal = font_besar = ImageFont.load_default()
+                # 2. SETUP FONT PAKE JURUS PAMUNGKAS (Pasti Gede!)
+                font_normal = ambil_font(url_reguler, "Roboto-Reguler.ttf", 50)
+                font_tebal = ambil_font(url_tebal, "Roboto-Tebal.ttf", 60)
+                font_besar = ambil_font(url_tebal, "Roboto-Tebal.ttf", 90)
 
                 no_tagihan = f"GG-{random.randint(1000, 9999)}"
                 tanggal_str = tanggal.strftime("%d/ %m/ %Y")
@@ -80,7 +92,7 @@ if submitted:
                 # D. TOTAL AMOUNT
                 draw.text((1050, 1640), total_amount, fill="white", font=font_besar)
 
-                # --- UPLOAD KE IMGBB DULU BIAR DAPET LINK ---
+                # --- UPLOAD KE IMGBB ---
                 buf_invoice = BytesIO()
                 template_img.save(buf_invoice, format="PNG")
                 img_bytes = buf_invoice.getvalue()
@@ -95,13 +107,12 @@ if submitted:
                 if res.status_code == 200:
                     link_online = res.json()["data"]["url"]
                     
-                    # --- BARU BIKIN QR CODE-NYA ---
+                    # --- BIKIN QR CODE ---
                     qr = qrcode.QRCode(box_size=10, border=4)
                     qr.add_data(link_online)
                     qr.make(fit=True)
                     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
                     
-                    # Tampilkan QR Code Utama buat Kasir
                     st.success("✅ QR Code Siap! Scan buat liat Invoice.")
                     st.image(qr_img, width=300)
                     
@@ -111,5 +122,5 @@ if submitted:
                 else:
                     st.error("Gagal upload ke ImgBB bro!")
 
-            except FileNotFoundError:
-                st.error("File 'template.png' ilang dari folder!")
+            except Exception as e:
+                st.error(f"Error: {e}")
