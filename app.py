@@ -34,47 +34,21 @@ with st.form("invoice_form"):
     submitted = st.form_submit_button("Generate QR Code Sekarang!")
 
 if submitted:
-    if not nama_klien:
-        st.error("Nama Klien wajib diisi bro!")
-    else:
         with st.spinner('Lagi ngeracik invoice...'):
             try:
                 # 1. BUKA TEMPLATE & SETUP FONT
                 template_img = Image.open("template.png")
                 draw = ImageDraw.Draw(template_img)
                 
+                # --- SETTING FONT SKALA RESOLUSI ---
                 try:
-                    font_normal = ImageFont.truetype("arial.ttf", 45)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 50) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 65) 
+                    font_normal = ImageFont.truetype("arial.ttf", 50)  
+                    font_tebal = ImageFont.truetype("arialbd.ttf", 60) 
+                    font_besar = ImageFont.truetype("arialbd.ttf", 90) 
                 except:
                     font_normal = font_tebal = font_besar = ImageFont.load_default()
 
                 no_tagihan = f"GG-{random.randint(1000, 9999)}"
-                tanggal_str = tanggal.strftime("%d/ %m/ %Y")
-                
-                # --- KOORDINAT FIX ---
-                
-                # 1. Setting Font
-                try:
-                    font_normal = ImageFont.truetype("arial.ttf", 30)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 32) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 45) 
-                except:
-                    font_normal = font_tebal = font_besar = ImageFont.load_default()
-
-                tanggal_str = tanggal.strftime("%d/ %m/ %Y")
-                
-                # --- PROSES NGE-CAP TEKS ---
-                
-                # --- SETTING FONT SKALA RESOLUSI ---
-                try:
-                    font_normal = ImageFont.truetype("arial.ttf", 30)  
-                    font_tebal = ImageFont.truetype("arialbd.ttf", 32) 
-                    font_besar = ImageFont.truetype("arialbd.ttf", 45) 
-                except:
-                    font_normal = font_tebal = font_besar = ImageFont.load_default()
-
                 tanggal_str = tanggal.strftime("%d/ %m/ %Y")
                 
                 # --- PROSES NGE-CAP DATA ---
